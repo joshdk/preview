@@ -6,6 +6,7 @@ package preview
 
 import (
 	"bytes"
+	"errors"
 	"image"
 	"image/png"
 	"io/ioutil"
@@ -14,9 +15,7 @@ import (
 )
 
 func File(filename string) error {
-	cmd := exec.Command("open", "-a", "Preview", filename)
-
-	return cmd.Start()
+	return show(filename)
 }
 
 func Image(img image.Image) error {
@@ -44,4 +43,27 @@ func render(img image.Image, filename string) error {
 	}
 
 	return ioutil.WriteFile(filename, buf.Bytes(), 0644)
+}
+
+func show(filename string) error {
+
+	for _, viewer := range viewers() {
+		cmd := exec.Command(viewer.Name, append(viewer.Args, filename)...)
+
+		if err := cmd.Start(); err != nil {
+
+			if execErr, ok := err.(*exec.Error); ok {
+				// This view does not exist, try the next one
+				if execErr.Err == exec.ErrNotFound {
+					continue
+				}
+			}
+
+			return err
+		}
+
+		return nil
+	}
+
+	return errors.New("no viewers available")
 }
