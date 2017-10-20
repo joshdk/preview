@@ -8,16 +8,20 @@ import (
 	"bytes"
 	"errors"
 	"image"
+	"image/color"
+	"image/draw"
 	"image/png"
 	"io/ioutil"
 	"os/exec"
 	"path"
 )
 
+// File will open a viewer for the path specified by filename.
 func File(filename string) error {
 	return show(filename)
 }
 
+// Image will open a viewer for the image.Image specified by img.
 func Image(img image.Image) error {
 
 	directory, err := ioutil.TempDir("", "preview")
@@ -32,6 +36,15 @@ func Image(img image.Image) error {
 	}
 
 	return File(filename)
+}
+
+// Color will open a viewer for the color.Color specified by img.
+// The previewed image will be 256x256 pixels in size, completely filled with the given color.
+func Color(clr color.Color) error {
+	img := image.NewRGBA(image.Rect(0, 0, 256, 256))
+	draw.Draw(img, img.Bounds(), &image.Uniform{clr}, image.ZP, draw.Src)
+
+	return Image(img)
 }
 
 func render(img image.Image, filename string) error {
