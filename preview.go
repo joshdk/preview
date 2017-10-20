@@ -12,31 +12,12 @@ import (
 	"image/draw"
 	"image/png"
 	"io/ioutil"
-	"os/exec"
 	"path"
+
+	"github.com/Arafatk/glot"
+	"gonum.org/v1/plot"
+	"gonum.org/v1/plot/vg"
 )
-
-// File will open a viewer for the path specified by filename.
-func File(filename string) error {
-	return view(filename)
-}
-
-// Image will open a viewer for the image.Image specified by img.
-func Image(img image.Image) error {
-
-	directory, err := ioutil.TempDir("", "preview")
-	if err != nil {
-		return err
-	}
-
-	filename := path.Join(directory, "image.png")
-
-	if err := render(img, filename); err != nil {
-		return err
-	}
-
-	return File(filename)
-}
 
 // Color will open a viewer for the color.Color specified by img.
 // The previewed image will be 256x256 pixels in size, completely filled with the given color.
@@ -47,15 +28,70 @@ func Color(clr color.Color) error {
 	return Image(img)
 }
 
+// File will open a viewer for the path specified by filename.
+func File(filename string) error {
+	return view(filename)
+}
+
+// Glot will open a viewer for the glot.Plot specified by plt.
+func Glot(plt *glot.Plot) error {
+
+	filename, err := tempFile()
+	if err != nil {
+		return err
+	}
+
+	if err := plt.SavePlot(filename); err != nil {
+		return err
+	}
+
+	return File(filename)
+}
+
+// Gonum will open a viewer for the plot.Plot specified by plt.
+// The previewed image will be 4x4 inches in size.
+func Gonum(plt *plot.Plot) error {
+
+	filename, err := tempFile()
+	if err != nil {
+		return err
+	}
+
+	if err := plt.Save(4*vg.Inch, 4*vg.Inch, filename); err != nil {
+		return err
+	}
+
+	return File(filename)
+}
+
+// Image will open a viewer for the image.Image specified by img.
+func Image(img image.Image) error {
+
+	filename, err := tempFile()
+	if err != nil {
+		return err
+	}
+
+	if err := render(img, filename); err != nil {
+		return err
+	}
+
+	return File(filename)
+}
+
 // Show will open a viewer for the type specified by any.
 func Show(any interface{}) error {
 	switch data := any.(type) {
 	case color.Color:
 		return Color(data)
-	case image.Image:
-		return Image(data)
 	case string:
 		return File(data)
+	case *glot.Plot:
+		return Glot(data)
+	case *plot.Plot:
+		return Gonum(data)
+	case image.Image:
+		return Image(data)
 	default:
 		return errors.New("unsupported type")
 	}
@@ -72,25 +108,11 @@ func render(img image.Image, filename string) error {
 	return ioutil.WriteFile(filename, buf.Bytes(), 0644)
 }
 
-func view(filename string) error {
-
-	for _, viewer := range viewers() {
-		cmd := exec.Command(viewer.Name, append(viewer.Args, filename)...)
-
-		if err := cmd.Start(); err != nil {
-
-			if execErr, ok := err.(*exec.Error); ok {
-				// This view does not exist, try the next one
-				if execErr.Err == exec.ErrNotFound {
-					continue
-				}
-			}
-
-			return err
-		}
-
-		return nil
+func tempFile() (string, error) {
+	directory, err := ioutil.TempDir("", "preview")
+	if err != nil {
+		return "", err
 	}
 
-	return errors.New("no viewers available")
+	return path.Join(directory, "image.png"), nil
 }
