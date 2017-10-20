@@ -7,5 +7,6 @@ jobs:
     working_directory: /go/src/github.com/joshdk/preview
     steps:
       - checkout
+      - run: sudo install -m 755 /dev/null /usr/bin/gnuplot
       - run: ./godelw version
       - run: ./godelw verify --apply=false

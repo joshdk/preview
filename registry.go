@@ -4,6 +4,11 @@
 
 package preview
 
+import (
+	"errors"
+	"os/exec"
+)
+
 type viewer struct {
 	Name string
 	Args []string
@@ -20,4 +25,27 @@ func register(name string, args ...string) {
 
 func viewers() []viewer {
 	return registry
+}
+
+func view(filename string) error {
+
+	for _, viewer := range viewers() {
+		cmd := exec.Command(viewer.Name, append(viewer.Args, filename)...)
+
+		if err := cmd.Start(); err != nil {
+
+			if execErr, ok := err.(*exec.Error); ok {
+				// This view does not exist, try the next one
+				if execErr.Err == exec.ErrNotFound {
+					continue
+				}
+			}
+
+			return err
+		}
+
+		return nil
+	}
+
+	return errors.New("no viewers available")
 }
