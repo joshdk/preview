@@ -18,7 +18,7 @@ import (
 
 // File will open a viewer for the path specified by filename.
 func File(filename string) error {
-	return show(filename)
+	return view(filename)
 }
 
 // Image will open a viewer for the image.Image specified by img.
@@ -47,6 +47,20 @@ func Color(clr color.Color) error {
 	return Image(img)
 }
 
+// Show will open a viewer for the type specified by any.
+func Show(any interface{}) error {
+	switch data := any.(type) {
+	case color.Color:
+		return Color(data)
+	case image.Image:
+		return Image(data)
+	case string:
+		return File(data)
+	default:
+		return errors.New("unsupported type")
+	}
+}
+
 func render(img image.Image, filename string) error {
 
 	var buf bytes.Buffer
@@ -58,7 +72,7 @@ func render(img image.Image, filename string) error {
 	return ioutil.WriteFile(filename, buf.Bytes(), 0644)
 }
 
-func show(filename string) error {
+func view(filename string) error {
 
 	for _, viewer := range viewers() {
 		cmd := exec.Command(viewer.Name, append(viewer.Args, filename)...)
