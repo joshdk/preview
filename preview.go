@@ -19,11 +19,25 @@ import (
 	"gonum.org/v1/plot/vg"
 )
 
-// Color will open a viewer for the color.Color specified by img.
+// Color will open a viewer for the color.Color specified by clr.
 // The previewed image will be 256x256 pixels in size, completely filled with the given color.
 func Color(clr color.Color) error {
-	img := image.NewRGBA(image.Rect(0, 0, 256, 256))
-	draw.Draw(img, img.Bounds(), &image.Uniform{clr}, image.ZP, draw.Src)
+	return Colors([]color.Color{clr})
+}
+
+// Colors will open a viewer for the color.Color slice specified by clrs.
+// The previewed image will be at least 256x256 pixels in size, filled with vertical stripes of equal width.
+func Colors(clrs []color.Color) error {
+	width := 32
+	if len(clrs) < 8 {
+		width = 256 / len(clrs)
+	}
+
+	img := image.NewRGBA(image.Rect(0, 0, width*len(clrs), 256))
+	for index, clr := range clrs {
+		bounds := image.Rect(width*index, 0, width*(index+1), 256)
+		draw.Draw(img, bounds, &image.Uniform{clr}, image.ZP, draw.Src)
+	}
 
 	return Image(img)
 }
@@ -84,6 +98,8 @@ func Show(any interface{}) error {
 	switch data := any.(type) {
 	case color.Color:
 		return Color(data)
+	case []color.Color:
+		return Colors(data)
 	case string:
 		return File(data)
 	case *glot.Plot:
