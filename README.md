@@ -39,7 +39,7 @@ If run on a Mac, this code will open up the [Preview utility](https://en.wikiped
 
 Previewing of the following types are supported:
 
-- [`color.Color`](https://golang.org/pkg/image/color/#Color)
+- [`color.Color`](https://golang.org/pkg/image/color/#Color) (or a slice of `[]color.Color`)
 - [`image.Image`](https://golang.org/pkg/image/#Image)
 - [`glot.Plot`](https://godoc.org/github.com/Arafatk/glot#Plot) from [Glot](https://github.com/Arafatk/glot)
 - [`plot.Plot`](https://godoc.org/gonum.org/v1/plot#Plot) from [Gonum Plot](https://github.com/gonum/plot)
